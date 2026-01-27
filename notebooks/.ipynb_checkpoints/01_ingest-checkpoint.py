@@ -30,12 +30,24 @@ df_raw = spark.read \
     .option("header", "true") \
     .option("delimiter", ",") \
     .option("inferSchema", "true") \
-    .load("data/SECOP_II_Contratos_Electronicos.csv")
+    .load("/app/data/SECOP_II_Contratos_Electronicos.csv")
 
+# %%
+#Normalizar
+import re
+
+def normalize_columns(df):
+    for col in df.columns:
+        new_col = re.sub(r"[ ,;{}()\n\t=]", "_", col.strip().lower())
+        df = df.withColumnRenamed(col, new_col)
+    return df
+
+df_raw = normalize_columns(df_raw)
+    
 # %%
 # ESCRITURA BRONCE (Delta)
 print("Escribiendo en capa Bronce...")
-output_path = "data/lakehouse/bronze/secop"
+output_path = "/app/data/lakehouse/bronze/secop"
 df_raw.write.format("delta").mode("overwrite").save(output_path)
 
 print(f"Ingesta completada. Registros procesados: {df_raw.count()}")
