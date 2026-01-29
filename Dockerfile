@@ -7,6 +7,9 @@ RUN apt-get update && \
     apt-get install -y default-jdk procps curl && \
     apt-get clean
 
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
 # 3. Configurar Variables de Entorno
 ENV JAVA_HOME=/usr/lib/jvm/default-java
 ENV SPARK_VERSION=3.5.0
