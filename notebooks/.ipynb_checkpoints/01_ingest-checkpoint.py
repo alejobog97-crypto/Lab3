@@ -8,16 +8,22 @@ import os
 import json
 import re
 from sodapy import Socrata
+from delta import configure_spark_with_delta_pip
 
+builder = (
+    SparkSession.builder
+    .appName("SECOP_Lakehouse")
+    .master("spark://spark-master:7077")
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+)
+
+spark = configure_spark_with_delta_pip(builder).getOrCreate()
+spark = configure_spark_with_delta_pip(builder).getOrCreate()
 # -----------------------------------------
 # Spark Session
 # -----------------------------------------
-spark = SparkSession.builder \
-    .appName("SECOP_Bronze_Ingest") \
-    .master("local[*]") \
-    .config("spark.executor.memory", "8g") \
-    .config("spark.driver.memory", "4g") \
-    .getOrCreate()
+
 
 print(f"Spark Version: {spark.version}")
 print(f"Spark Master: {spark.sparkContext.master}")
@@ -44,7 +50,7 @@ AND
     fecha_de_firma > '2025-09-30T23:59:59'
 AND 
     fecha_de_firma < '2026-01-01T00:00:00'
-LIMIT 50000
+LIMIT 100000
 """
 
 results = client.get("jbjy-vk9h", query=query)

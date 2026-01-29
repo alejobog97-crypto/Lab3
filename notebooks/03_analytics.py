@@ -67,9 +67,9 @@ print(f"Mediana (P50): {percentiles[1]}")
 print(f"P75: {percentiles[2]}")
 
 #Actividad 3. Distribución por departamento
-dist_deptos = (
+dist_entidades = (
     df_silver
-    .groupBy("departamento")
+    .groupBy("nombre_entidad")
     .agg(
         count("*").alias("num_contratos"),
         sum_("valor_del_contrato").alias("total_contratado")
@@ -77,7 +77,8 @@ dist_deptos = (
     .orderBy(desc("total_contratado"))
 )
 
-dist_deptos.show(truncate=False)
+dist_entidades.show(truncate=False)
+
 
 #Outliers
 q1, q3 = df_silver.approxQuantile(
@@ -110,7 +111,7 @@ outliers.select(
 
 df_gold = (
     df_silver
-    .groupBy("departamento")
+    .groupBy("nombre_entidad")
     .agg(
         sum_("valor_del_contrato").alias("total_contratado")
     )
@@ -167,5 +168,5 @@ df_gold.write.format("delta") \
 
 # %%
 # Visualizar resultados
-print("🏆 Top 10 Departamentos por contratación pública:")
+print("🏆 Top 10 Entidades por contratación pública:")
 df_gold.show(truncate=False)
