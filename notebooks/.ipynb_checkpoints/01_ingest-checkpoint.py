@@ -24,13 +24,11 @@ spark = configure_spark_with_delta_pip(builder).getOrCreate()
 
 # %%
 # LECTURA CSV
-print("Leyendo CSV crudo...")
-df_raw = spark.read \
-    .format("csv") \
-    .option("header", "true") \
-    .option("delimiter", ",") \
-    .option("inferSchema", "true") \
-    .load("/app/data/SECOP_II_Contratos_Electronicos.csv")
+print("Leyendo datos desde JSON...")
+df_raw = spark.read.json(json_path)
+
+print(f"Total de registros: {df_raw.count()}")
+print(f"Total de columnas: {len(df_raw.columns)}")
 
 # %%
 #Normalizar
