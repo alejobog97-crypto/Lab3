@@ -1,0 +1,53 @@
+# =========================
+# Data files (NO versionar)
+# =========================
+
+# Parquet / Delta / Lakehouse
+*.parquet
+*.delta
+_delta_log/
+data/
+lakehouse/
+spark-warehouse/
+
+# Raw / processed data
+raw/
+bronze/
+silver/
+gold/
+opt/spark-data/
+app/data/
+
+# =========================
+# Spark & Hadoop
+# =========================
+*.crc
+*.log
+metastore_db/
+derby.log
+checkpoint/
+__spark_metadata__/
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+*.ipynb~
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env
+
+# =========================
+# OS / IDE
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
