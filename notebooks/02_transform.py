@@ -27,6 +27,9 @@ builder = SparkSession.builder \
 
 spark = configure_spark_with_delta_pip(builder).getOrCreate()
 
+spark.conf.set("spark.sql.parquet.int96RebaseModeInWrite", "CORRECTED")
+spark.conf.set("spark.sql.parquet.datetimeRebaseModeInWrite", "CORRECTED")
+
 # -----------------------------------------
 # Leer Bronce
 # -----------------------------------------

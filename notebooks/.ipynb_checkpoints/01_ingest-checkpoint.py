@@ -50,7 +50,7 @@ AND
     fecha_de_firma > '2025-09-30T23:59:59'
 AND 
     fecha_de_firma < '2026-01-01T00:00:00'
-LIMIT 100000
+LIMIT 200000
 """
 
 results = client.get("jbjy-vk9h", query=query)

@@ -42,6 +42,7 @@ faltantes = df_silver.select(
         .alias("fecha_firma_pct_null")
 )
 
+print("Datos Faltantes Variables Númericas")
 faltantes.show(truncate=False)
 
 #Estadisticas Basicas
@@ -51,6 +52,7 @@ stats_basicas = df_silver.select(
     "saldo_cdp"
 ).describe()
 
+print("Estadísticas Basicas")
 stats_basicas.show(truncate=False)
 
 #Medianas y Percentiles
@@ -76,7 +78,7 @@ dist_entidades = (
     )
     .orderBy(desc("total_contratado"))
 )
-
+print("Distribución por Entidades")
 dist_entidades.show(truncate=False)
 
 
@@ -156,7 +158,7 @@ df_gold_kpis = (
         expr("percentile_approx(valor_del_contrato, 0.5)").alias("mediana_contrato")
     )
 )
-
+print("Summary")
 df_gold_kpis.show(20, truncate=False)
 
 # %%
