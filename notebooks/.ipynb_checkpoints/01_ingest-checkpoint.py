@@ -1,51 +1,92 @@
-# %% [markdown]
-# # 1. Ingesta (Capa Bronce)
-# Convertimos CSV crudo a formato Delta Lake.
+# =========================================
+# 01_ingest_bronze.py
+# Ingesta SECOP → Delta Bronze
+# =========================================
 
-# %%
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_date
-from delta import *
 import os
-
-# URL del Master (definida en docker-compose)
-master_url = "spark://spark-master:7077"
-
-# Configuración: Añadimos Delta Lake
-builder = SparkSession.builder \
-    .appName("Lab_SECOP_Bronze") \
-    .master(master_url) \
-    .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.0.0") \
-    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
-    .config("spark.executor.memory", "1g") 
-
-spark = configure_spark_with_delta_pip(builder).getOrCreate()
-
-# %%
-# LECTURA CSV
-print("Leyendo datos desde JSON...")
-df_raw = spark.read.json(json_path)
-
-print(f"Total de registros: {df_raw.count()}")
-print(f"Total de columnas: {len(df_raw.columns)}")
-
-# %%
-#Normalizar
+import json
 import re
+from sodapy import Socrata
 
+# -----------------------------------------
+# Spark Session
+# -----------------------------------------
+spark = SparkSession.builder \
+    .appName("SECOP_Bronze_Ingest") \
+    .master("local[*]") \
+    .config("spark.executor.memory", "8g") \
+    .config("spark.driver.memory", "4g") \
+    .getOrCreate()
+
+print(f"Spark Version: {spark.version}")
+print(f"Spark Master: {spark.sparkContext.master}")
+
+# -----------------------------------------
+# Paths
+# -----------------------------------------
+RAW_PATH = "/app/data/raw"
+BRONZE_PATH = "/app/data/lakehouse/bronze/secop"
+JSON_PATH = f"{RAW_PATH}/secop_contratos.json"
+
+os.makedirs(RAW_PATH, exist_ok=True)
+
+# -----------------------------------------
+# Extracción desde Socrata (SECOP)
+# -----------------------------------------
+client = Socrata("www.datos.gov.co", None)
+
+query = """
+SELECT *
+WHERE 
+    departamento = "Distrito Capital de Bogotá"
+AND
+    fecha_de_firma > '2025-09-30T23:59:59'
+AND 
+    fecha_de_firma < '2026-01-01T00:00:00'
+LIMIT 50000
+"""
+
+results = client.get("jbjy-vk9h", query=query)
+print(f"Registros extraídos: {len(results)}")
+
+# -----------------------------------------
+# Guardar JSON línea a línea (raw)
+# -----------------------------------------
+with open(JSON_PATH, "w", encoding="utf-8") as f:
+    for record in results:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+print(f"Archivo RAW guardado en: {JSON_PATH}")
+
+# -----------------------------------------
+# Lectura Spark JSON
+# -----------------------------------------
+df_raw = spark.read.json(JSON_PATH)
+
+print(f"Registros leídos: {df_raw.count()}")
+print(f"Columnas: {len(df_raw.columns)}")
+
+# -----------------------------------------
+# Normalización de nombres de columnas
+# (solo nombres, NO tipos)
+# -----------------------------------------
 def normalize_columns(df):
-    for col in df.columns:
-        new_col = re.sub(r"[ ,;{}()\n\t=]", "_", col.strip().lower())
-        df = df.withColumnRenamed(col, new_col)
+    for c in df.columns:
+        new_c = re.sub(r"[ ,;{}()\n\t=]", "_", c.strip().lower())
+        df = df.withColumnRenamed(c, new_c)
     return df
 
-df_raw = normalize_columns(df_raw)
-    
-# %%
-# ESCRITURA BRONCE (Delta)
-print("Escribiendo en capa Bronce...")
-output_path = "/app/data/lakehouse/bronze/secop"
-df_raw.write.format("delta").mode("overwrite").save(output_path)
+df_bronze = normalize_columns(df_raw)
 
-print(f"Ingesta completada. Registros procesados: {df_raw.count()}")
+# -----------------------------------------
+# Escritura Delta Bronze
+# -----------------------------------------
+print("Escribiendo capa Bronze...")
+
+df_bronze.write.format("delta") \
+    .mode("overwrite") \
+    .option("overwriteSchema", "true") \
+    .save(BRONZE_PATH)
+
+print("Ingesta Bronze completada correctamente ✅")

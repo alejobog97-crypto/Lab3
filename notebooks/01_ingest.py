@@ -41,10 +41,10 @@ SELECT *
 WHERE 
     departamento = "Distrito Capital de Bogotá"
 AND
-    fecha_de_firma > '2025-11-30T23:59:59'
+    fecha_de_firma > '2025-09-30T23:59:59'
 AND 
     fecha_de_firma < '2026-01-01T00:00:00'
-LIMIT 10000
+LIMIT 50000
 """
 
 results = client.get("jbjy-vk9h", query=query)
